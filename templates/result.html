@@ -12,7 +12,7 @@
 
   <div class="container">
     <div class="card">
-      <img src="{{ url_for('static', filename=image_path.split('static/')[1]) }}" alt="Uploaded Image" class="preview">
+      <img src="{{ url_for('static', filename=image_path) }}" alt="Uploaded Image" class="preview">
 
       <h2>Dominant Emotion: {{ result.dominant_emotion }}</h2>
 

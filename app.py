@@ -5,36 +5,38 @@ from model import predict_emotion
 
 app = Flask(__name__)
 
-# Use /tmp on Render, static/uploads locally
-if os.environ.get("RENDER"):  # Render automatically sets this
-    UPLOAD_FOLDER = "/tmp"
-else:
-    UPLOAD_FOLDER = os.path.join("static", "uploads")
-
+# Save uploads inside static/uploads so Render can serve them publicly
+UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-
-@app.route("/predict", methods=["POST"])
+@app.route('/predict', methods=['POST'])
 def predict():
-    file = request.files.get("image") or request.files.get("file")
-    if not file or file.filename == "":
-        return "No file uploaded"
+    file = None
 
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+    # Handle image upload from file selector or webcam
+    if 'image' in request.files:
+        file = request.files['image']
+    elif 'file' in request.files:
+        file = request.files['file']
+
+    if not file or file.filename == '':
+        return "No image provided"
+
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
     file.save(filepath)
 
     try:
         result = predict_emotion(filepath)
-        return render_template("result.html", result=result, image_path=filepath)
+        # relative path for Flask static URL
+        relative_path = f'uploads/{file.filename}'
+        return render_template('result.html', result=result, image_path=relative_path)
     except Exception as e:
         return f"Error predicting emotion: {e}"
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
